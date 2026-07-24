@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Buuba — Resumen</title>
+<style>
+  :root {
+    --paper: #eff3f6;
+    --grid: #c9d6e3;
+    --ink: #1b2a4a;
+    --ink-soft: #3d4d6e;
+    --pizarron: #1f6e5c;
+    --pizarron-dark: #17594a;
+    --lapiz: #e8a93c;
+    --lapiz-dark: #c98a1b;
+    --corrector: #c23b3b;
+    --corrector-dark: #a13024;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  .contenedor {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+  }
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+  }
+  .subtitulo {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    margin: 0 0 20px;
+  }
+  .tarjeta {
+    background: white;
+    border: 2px solid var(--grid);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .semaforo-fila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .circulo {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .circulo.verde { background: var(--pizarron); }
+  .circulo.amarillo { background: var(--lapiz); }
+  .circulo.rojo { background: var(--corrector); }
+  .circulo.gris { background: var(--grid); }
+  .semaforo-texto {
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+  .etiqueta {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .monto {
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+  .barra-fondo {
+    background: var(--paper);
+    border-radius: 999px;
+    height: 14px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .barra-relleno {
+    height: 100%;
+    background: var(--pizarron);
+    border-radius: 999px;
+    transition: width 0.3s;
+  }
+  .barra-relleno.rojo { background: var(--corrector); }
+  .barra-relleno.amarillo { background: var(--lapiz); }
+  .pct-texto {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+  .alertas-fila {
+    display: flex;
+    gap: 12px;
+  }
+  .chip {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    border-radius: 10px;
+    background: var(--paper);
+  }
+  .chip .numero {
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+  .chip .numero.alerta {
+    color: var(--corrector-dark);
+  }
+  .chip .desc {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+  }
+  .pie {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    margin-top: 12px;
+  }
+  #btn-refrescar {
+    display: block;
+    margin: 16px auto 0;
+    background: var(--pizarron);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  #btn-refrescar:active { background: var(--pizarron-dark); }
+  .estado-mensaje {
+    text-align: center;
+    color: var(--ink-soft);
+    padding: 40px 0;
+  }
+  .oculto { display: none; }
+</style>
+</head>
+<body>
+  <div class="contenedor">
+    <h1>Buuba</h1>
+    <p class="subtitulo">Resumen del negocio</p>
+
+    <div id="cargando" class="estado-mensaje">Cargando…</div>
+    <div id="error" class="estado-mensaje oculto"></div>
+
+    <div id="contenido" class="oculto">
+      <div class="tarjeta">
+        <div class="etiqueta">Salud del mes</div>
+        <div class="semaforo-fila">
+          <div id="circulo-semaforo" class="circulo gris"></div>
+          <div id="texto-semaforo" class="semaforo-texto">Sin configurar</div>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="etiqueta">Ventas de hoy</div>
+        <div id="ventas-hoy" class="monto">$0</div>
+      </div>
+
+      <div id="tarjeta-meta" class="tarjeta oculto">
+        <div class="etiqueta">Meta del día</div>
+        <div class="barra-fondo">
+          <div id="barra-meta" class="barra-relleno" style="width: 0%"></div>
+        </div>
+        <div id="texto-meta" class="pct-texto"></div>
+      </div>
+
+      <div class="tarjeta">
+        <div class="etiqueta">Alertas</div>
+        <div class="alertas-fila">
+          <div class="chip">
+            <div id="num-quiebre" class="numero">0</div>
+            <div class="desc">En quiebre</div>
+          </div>
+          <div class="chip">
+            <div id="num-stock-bajo" class="numero">0</div>
+            <div class="desc">Stock bajo</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="actualizado" class="pie"></div>
+    </div>
+
+    <button id="btn-refrescar" class="oculto">Actualizar</button>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://ozfylcauqhogfzfwhlkm.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_FXBLqB0Kw4bOlRaZzRiEog_-FtOU890";
+
+    const formatoMoneda = (valor) => `$${Math.round(Number(valor) || 0).toLocaleString("es-CL")}`;
+
+    function textoTiempoRelativo(fechaISO) {
+      const diffMs = Date.now() - new Date(fechaISO).getTime();
+      const minutos = Math.round(diffMs / 60000);
+      if (minutos < 1) return "hace instantes";
+      if (minutos < 60) return `hace ${minutos} min`;
+      const horas = Math.round(minutos / 60);
+      return `hace ${horas} h`;
+    }
+
+    async function cargarResumen() {
+      const cargando = document.getElementById("cargando");
+      const error = document.getElementById("error");
+      const contenido = document.getElementById("contenido");
+      const btnRefrescar = document.getElementById("btn-refrescar");
+
+      cargando.classList.remove("oculto");
+      error.classList.add("oculto");
+
+      try {
+        const respuesta = await fetch(
+          `${SUPABASE_URL}/rest/v1/resumen_negocio?select=*&id=eq.1`,
+          {
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+          }
+        );
+        if (!respuesta.ok) throw new Error(`Error del servidor (${respuesta.status})`);
+        const filas = await respuesta.json();
+        if (!filas.length) throw new Error("Todavía no hay datos sincronizados.");
+
+        const datos = filas[0];
+
+        const circulo = document.getElementById("circulo-semaforo");
+        const textoSemaforo = document.getElementById("texto-semaforo");
+        const colores = {
+          verde: "Buen ritmo este mes",
+          amarillo: "Cerca del punto de equilibrio",
+          rojo: "Bajo el punto de equilibrio",
+        };
+        circulo.className = `circulo ${datos.semaforo || "gris"}`;
+        textoSemaforo.textContent = datos.semaforo ? colores[datos.semaforo] : "Sin configurar";
+
+        document.getElementById("ventas-hoy").textContent = formatoMoneda(datos.ventas_hoy);
+
+        const tarjetaMeta = document.getElementById("tarjeta-meta");
+        if (datos.meta_diaria) {
+          tarjetaMeta.classList.remove("oculto");
+          const pct = Math.min(100, datos.pct_avance_meta || 0);
+          const barra = document.getElementById("barra-meta");
+          barra.style.width = `${pct}%`;
+          barra.className = `barra-relleno ${pct >= 100 ? "" : pct >= 50 ? "amarillo" : "rojo"}`;
+          document.getElementById("texto-meta").textContent =
+            `${formatoMoneda(datos.ventas_hoy)} de ${formatoMoneda(datos.meta_diaria)} (${(datos.pct_avance_meta ?? 0).toFixed(1)}%)`;
+        } else {
+          tarjetaMeta.classList.add("oculto");
+        }
+
+        const alertas = datos.alertas || {};
+        const numQuiebre = document.getElementById("num-quiebre");
+        const numStockBajo = document.getElementById("num-stock-bajo");
+        numQuiebre.textContent = alertas.quiebre ?? 0;
+        numQuiebre.classList.toggle("alerta", (alertas.quiebre ?? 0) > 0);
+        numStockBajo.textContent = alertas.stock_bajo ?? 0;
+        numStockBajo.classList.toggle("alerta", (alertas.stock_bajo ?? 0) > 0);
+
+        document.getElementById("actualizado").textContent =
+          `Actualizado ${textoTiempoRelativo(datos.actualizado_en)}`;
+
+        contenido.classList.remove("oculto");
+        cargando.classList.add("oculto");
+        btnRefrescar.classList.remove("oculto");
+      } catch (err) {
+        cargando.classList.add("oculto");
+        contenido.classList.add("oculto");
+        error.textContent = err.message || "No se pudo cargar el resumen.";
+        error.classList.remove("oculto");
+        btnRefrescar.classList.remove("oculto");
+      }
+    }
+
+    document.getElementById("btn-refrescar").addEventListener("click", cargarResumen);
+    cargarResumen();
+    setInterval(cargarResumen, 60000);
+  </script>
+</body>
+</html>
