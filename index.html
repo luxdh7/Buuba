@@ -142,6 +142,49 @@
     padding: 40px 0;
   }
   .oculto { display: none; }
+  .campo {
+    margin-bottom: 14px;
+  }
+  .campo label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .campo input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--grid);
+    border-radius: 10px;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  #btn-login, #btn-logout {
+    display: block;
+    width: 100%;
+    background: var(--pizarron);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  #btn-login:active { background: var(--pizarron-dark); }
+  #btn-logout {
+    width: auto;
+    background: transparent;
+    color: var(--ink-soft);
+    font-weight: 500;
+    text-decoration: underline;
+    padding: 6px 0;
+  }
+  .error-login {
+    color: var(--corrector-dark);
+    font-size: 0.85rem;
+    margin-top: 10px;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -149,7 +192,22 @@
     <h1>Buuba</h1>
     <p class="subtitulo">Resumen del negocio</p>
 
-    <div id="cargando" class="estado-mensaje">Cargando…</div>
+    <div id="pantalla-login" class="tarjeta oculto">
+      <form id="form-login">
+        <div class="campo">
+          <label for="login-email">Correo</label>
+          <input type="email" id="login-email" autocomplete="username" required />
+        </div>
+        <div class="campo">
+          <label for="login-password">Contraseña</label>
+          <input type="password" id="login-password" autocomplete="current-password" required />
+        </div>
+        <button type="submit" id="btn-login">Entrar</button>
+        <div id="error-login" class="error-login oculto"></div>
+      </form>
+    </div>
+
+    <div id="cargando" class="estado-mensaje oculto">Cargando…</div>
     <div id="error" class="estado-mensaje oculto"></div>
 
     <div id="contenido" class="oculto">
@@ -189,6 +247,7 @@
       </div>
 
       <div id="actualizado" class="pie"></div>
+      <button id="btn-logout">Cerrar sesión</button>
     </div>
 
     <button id="btn-refrescar" class="oculto">Actualizar</button>
@@ -197,6 +256,7 @@
   <script>
     const SUPABASE_URL = "https://ozfylcauqhogfzfwhlkm.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_FXBLqB0Kw4bOlRaZzRiEog_-FtOU890";
+    const CLAVE_SESION = "buuba_sesion_remota";
 
     const formatoMoneda = (valor) => `$${Math.round(Number(valor) || 0).toLocaleString("es-CL")}`;
 
@@ -209,7 +269,84 @@
       return `hace ${horas} h`;
     }
 
+    function obtenerSesion() {
+      try {
+        return JSON.parse(localStorage.getItem(CLAVE_SESION) || "null");
+      } catch {
+        return null;
+      }
+    }
+
+    function guardarSesion(sesion) {
+      localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
+    }
+
+    function borrarSesion() {
+      localStorage.removeItem(CLAVE_SESION);
+    }
+
+    function mostrarLogin(mensajeError) {
+      document.getElementById("pantalla-login").classList.remove("oculto");
+      document.getElementById("cargando").classList.add("oculto");
+      document.getElementById("contenido").classList.add("oculto");
+      document.getElementById("error").classList.add("oculto");
+      document.getElementById("btn-refrescar").classList.add("oculto");
+      const errorLogin = document.getElementById("error-login");
+      if (mensajeError) {
+        errorLogin.textContent = mensajeError;
+        errorLogin.classList.remove("oculto");
+      } else {
+        errorLogin.classList.add("oculto");
+      }
+    }
+
+    async function iniciarSesion(email, password) {
+      const respuesta = await fetch(
+        `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+        {
+          method: "POST",
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+      const datos = await respuesta.json();
+      if (!respuesta.ok) {
+        throw new Error(
+          datos.error_description || datos.msg || "Correo o contraseña incorrectos."
+        );
+      }
+      guardarSesion({ access_token: datos.access_token, refresh_token: datos.refresh_token });
+    }
+
+    async function refrescarSesion(refreshToken) {
+      const respuesta = await fetch(
+        `${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
+        {
+          method: "POST",
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        }
+      );
+      const datos = await respuesta.json();
+      if (!respuesta.ok) throw new Error("Sesión vencida");
+      guardarSesion({ access_token: datos.access_token, refresh_token: datos.refresh_token });
+      return datos.access_token;
+    }
+
     async function cargarResumen() {
+      const sesion = obtenerSesion();
+      if (!sesion) {
+        mostrarLogin();
+        return;
+      }
+
+      document.getElementById("pantalla-login").classList.add("oculto");
       const cargando = document.getElementById("cargando");
       const error = document.getElementById("error");
       const contenido = document.getElementById("contenido");
@@ -219,15 +356,29 @@
       error.classList.add("oculto");
 
       try {
-        const respuesta = await fetch(
+        let respuesta = await fetch(
           `${SUPABASE_URL}/rest/v1/resumen_negocio?select=*&id=eq.1`,
           {
             headers: {
               apikey: SUPABASE_ANON_KEY,
-              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+              Authorization: `Bearer ${sesion.access_token}`,
             },
           }
         );
+
+        if (respuesta.status === 401) {
+          const nuevoToken = await refrescarSesion(sesion.refresh_token);
+          respuesta = await fetch(
+            `${SUPABASE_URL}/rest/v1/resumen_negocio?select=*&id=eq.1`,
+            {
+              headers: {
+                apikey: SUPABASE_ANON_KEY,
+                Authorization: `Bearer ${nuevoToken}`,
+              },
+            }
+          );
+        }
+
         if (!respuesta.ok) throw new Error(`Error del servidor (${respuesta.status})`);
         const filas = await respuesta.json();
         if (!filas.length) throw new Error("Todavía no hay datos sincronizados.");
@@ -276,11 +427,39 @@
       } catch (err) {
         cargando.classList.add("oculto");
         contenido.classList.add("oculto");
+        if (err.message === "Sesión vencida") {
+          borrarSesion();
+          mostrarLogin("Tu sesión venció, ingresa de nuevo.");
+          return;
+        }
         error.textContent = err.message || "No se pudo cargar el resumen.";
         error.classList.remove("oculto");
         btnRefrescar.classList.remove("oculto");
       }
     }
+
+    document.getElementById("form-login").addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const btnLogin = document.getElementById("btn-login");
+      btnLogin.disabled = true;
+      btnLogin.textContent = "Entrando…";
+      try {
+        await iniciarSesion(email, password);
+        await cargarResumen();
+      } catch (err) {
+        mostrarLogin(err.message || "No se pudo iniciar sesión.");
+      } finally {
+        btnLogin.disabled = false;
+        btnLogin.textContent = "Entrar";
+      }
+    });
+
+    document.getElementById("btn-logout").addEventListener("click", () => {
+      borrarSesion();
+      mostrarLogin();
+    });
 
     document.getElementById("btn-refrescar").addEventListener("click", cargarResumen);
     cargarResumen();
