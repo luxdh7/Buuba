@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="theme-color" content="#1f6e5c" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
 <title>Buuba — Resumen</title>
 <style>
   :root {
@@ -185,6 +189,77 @@
     margin-top: 10px;
     text-align: center;
   }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    flex: 1;
+    white-space: nowrap;
+    background: white;
+    border: 2px solid var(--grid);
+    color: var(--ink-soft);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+  .tab-btn.activo {
+    background: var(--pizarron);
+    border-color: var(--pizarron);
+    color: white;
+  }
+  .panel.oculto { display: none; }
+  .buscador {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--grid);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+  }
+  .fila-item {
+    background: white;
+    border: 2px solid var(--grid);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .fila-item .linea-1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .fila-item .linea-2 {
+    display: flex;
+    justify-content: space-between;
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    margin-top: 4px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink-soft);
+  }
+  .badge.rojo {
+    background: var(--corrector);
+    color: white;
+  }
+  .panel-estado {
+    text-align: center;
+    color: var(--ink-soft);
+    padding: 24px 0;
+  }
 </style>
 </head>
 <body>
@@ -211,39 +286,61 @@
     <div id="error" class="estado-mensaje oculto"></div>
 
     <div id="contenido" class="oculto">
-      <div class="tarjeta">
-        <div class="etiqueta">Salud del mes</div>
-        <div class="semaforo-fila">
-          <div id="circulo-semaforo" class="circulo gris"></div>
-          <div id="texto-semaforo" class="semaforo-texto">Sin configurar</div>
-        </div>
+      <div class="tabs">
+        <button class="tab-btn activo" data-tab="resumen">Resumen</button>
+        <button class="tab-btn" data-tab="catalogo">Catálogo</button>
+        <button class="tab-btn" data-tab="compras">Compras</button>
+        <button class="tab-btn" data-tab="ventas">Ventas</button>
       </div>
 
-      <div class="tarjeta">
-        <div class="etiqueta">Ventas de hoy</div>
-        <div id="ventas-hoy" class="monto">$0</div>
-      </div>
-
-      <div id="tarjeta-meta" class="tarjeta oculto">
-        <div class="etiqueta">Meta del día</div>
-        <div class="barra-fondo">
-          <div id="barra-meta" class="barra-relleno" style="width: 0%"></div>
-        </div>
-        <div id="texto-meta" class="pct-texto"></div>
-      </div>
-
-      <div class="tarjeta">
-        <div class="etiqueta">Alertas</div>
-        <div class="alertas-fila">
-          <div class="chip">
-            <div id="num-quiebre" class="numero">0</div>
-            <div class="desc">En quiebre</div>
-          </div>
-          <div class="chip">
-            <div id="num-stock-bajo" class="numero">0</div>
-            <div class="desc">Stock bajo</div>
+      <div id="panel-resumen" class="panel">
+        <div class="tarjeta">
+          <div class="etiqueta">Salud del mes</div>
+          <div class="semaforo-fila">
+            <div id="circulo-semaforo" class="circulo gris"></div>
+            <div id="texto-semaforo" class="semaforo-texto">Sin configurar</div>
           </div>
         </div>
+
+        <div class="tarjeta">
+          <div class="etiqueta">Ventas de hoy</div>
+          <div id="ventas-hoy" class="monto">$0</div>
+        </div>
+
+        <div id="tarjeta-meta" class="tarjeta oculto">
+          <div class="etiqueta">Meta del día</div>
+          <div class="barra-fondo">
+            <div id="barra-meta" class="barra-relleno" style="width: 0%"></div>
+          </div>
+          <div id="texto-meta" class="pct-texto"></div>
+        </div>
+
+        <div class="tarjeta">
+          <div class="etiqueta">Alertas</div>
+          <div class="alertas-fila">
+            <div class="chip">
+              <div id="num-quiebre" class="numero">0</div>
+              <div class="desc">En quiebre</div>
+            </div>
+            <div class="chip">
+              <div id="num-stock-bajo" class="numero">0</div>
+              <div class="desc">Stock bajo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-catalogo" class="panel oculto">
+        <input type="text" id="buscador-catalogo" class="buscador" placeholder="Buscar producto o categoría…" />
+        <div id="lista-catalogo"></div>
+      </div>
+
+      <div id="panel-compras" class="panel oculto">
+        <div id="lista-compras"></div>
+      </div>
+
+      <div id="panel-ventas" class="panel oculto">
+        <div id="lista-ventas"></div>
       </div>
 
       <div id="actualizado" class="pie"></div>
@@ -339,6 +436,29 @@
       return datos.access_token;
     }
 
+    async function fetchAutenticado(rutaConsulta) {
+      const sesion = obtenerSesion();
+      if (!sesion) throw new Error("SIN_SESION");
+
+      const hacerFetch = (token) =>
+        fetch(`${SUPABASE_URL}/rest/v1/${rutaConsulta}`, {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+      let respuesta = await hacerFetch(sesion.access_token);
+      if (respuesta.status === 401) {
+        const nuevoToken = await refrescarSesion(sesion.refresh_token);
+        respuesta = await hacerFetch(nuevoToken);
+      }
+      if (!respuesta.ok) throw new Error(`Error del servidor (${respuesta.status})`);
+      return respuesta.json();
+    }
+
+    let catalogoCache = [];
+
     async function cargarResumen() {
       const sesion = obtenerSesion();
       if (!sesion) {
@@ -356,31 +476,7 @@
       error.classList.add("oculto");
 
       try {
-        let respuesta = await fetch(
-          `${SUPABASE_URL}/rest/v1/resumen_negocio?select=*&id=eq.1`,
-          {
-            headers: {
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: `Bearer ${sesion.access_token}`,
-            },
-          }
-        );
-
-        if (respuesta.status === 401) {
-          const nuevoToken = await refrescarSesion(sesion.refresh_token);
-          respuesta = await fetch(
-            `${SUPABASE_URL}/rest/v1/resumen_negocio?select=*&id=eq.1`,
-            {
-              headers: {
-                apikey: SUPABASE_ANON_KEY,
-                Authorization: `Bearer ${nuevoToken}`,
-              },
-            }
-          );
-        }
-
-        if (!respuesta.ok) throw new Error(`Error del servidor (${respuesta.status})`);
-        const filas = await respuesta.json();
+        const filas = await fetchAutenticado("resumen_negocio?select=*&id=eq.1");
         if (!filas.length) throw new Error("Todavía no hay datos sincronizados.");
 
         const datos = filas[0];
@@ -438,6 +534,159 @@
       }
     }
 
+    function renderEstadoPanel(contenedor, mensaje) {
+      contenedor.innerHTML = `<div class="panel-estado">${mensaje}</div>`;
+    }
+
+    async function manejarErrorPanel(err, contenedor, mensajeGenerico) {
+      if (err.message === "SIN_SESION" || err.message === "Sesión vencida") {
+        borrarSesion();
+        mostrarLogin(err.message === "Sesión vencida" ? "Tu sesión venció, ingresa de nuevo." : undefined);
+        return;
+      }
+      renderEstadoPanel(contenedor, err.message || mensajeGenerico);
+    }
+
+    function renderFilaCatalogo(producto) {
+      const stockBajo = producto.stock_actual <= producto.stock_minimo;
+      return `
+        <div class="fila-item">
+          <div class="linea-1">
+            <span>${producto.nombre}</span>
+            <span>${formatoMoneda(producto.precio_venta)}</span>
+          </div>
+          <div class="linea-2">
+            <span>${producto.categoria_nombre || "—"}</span>
+            <span class="badge ${stockBajo ? "rojo" : ""}">Stock: ${producto.stock_actual}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCatalogo(filtro) {
+      const contenedor = document.getElementById("lista-catalogo");
+      const texto = (filtro || "").trim().toLowerCase();
+      const filas = texto
+        ? catalogoCache.filter(
+            (p) =>
+              (p.nombre || "").toLowerCase().includes(texto) ||
+              (p.categoria_nombre || "").toLowerCase().includes(texto)
+          )
+        : catalogoCache;
+
+      if (!filas.length) {
+        renderEstadoPanel(contenedor, "No hay productos que mostrar.");
+        return;
+      }
+      contenedor.innerHTML = filas.map(renderFilaCatalogo).join("");
+    }
+
+    async function cargarCatalogo() {
+      const contenedor = document.getElementById("lista-catalogo");
+      renderEstadoPanel(contenedor, "Cargando…");
+      try {
+        catalogoCache = await fetchAutenticado("productos?select=*&activo=eq.true&order=nombre.asc");
+        renderCatalogo(document.getElementById("buscador-catalogo").value);
+      } catch (err) {
+        await manejarErrorPanel(err, contenedor, "No se pudo cargar el catálogo.");
+      }
+    }
+
+    async function cargarCompras() {
+      const contenedor = document.getElementById("lista-compras");
+      renderEstadoPanel(contenedor, "Cargando…");
+      try {
+        const compras = await fetchAutenticado(
+          "compras?select=*&order=fecha_ingreso.desc,actualizado_en.desc&limit=90"
+        );
+        if (!compras.length) {
+          renderEstadoPanel(contenedor, "Todavía no hay compras sincronizadas.");
+          return;
+        }
+        contenedor.innerHTML = compras
+          .map(
+            (compra) => `
+            <div class="fila-item">
+              <div class="linea-1">
+                <span>${compra.proveedor_nombre || "—"}</span>
+                <span>${formatoMoneda(compra.monto_total)}</span>
+              </div>
+              <div class="linea-2">
+                <span>Factura ${compra.numero_factura || "—"} · ${compra.fecha_ingreso || "—"}</span>
+                <span>Ingresado: ${formatoMoneda(compra.monto_ingresado)}</span>
+              </div>
+            </div>
+          `
+          )
+          .join("");
+      } catch (err) {
+        await manejarErrorPanel(err, contenedor, "No se pudo cargar las compras.");
+      }
+    }
+
+    async function cargarVentas() {
+      const contenedor = document.getElementById("lista-ventas");
+      renderEstadoPanel(contenedor, "Cargando…");
+      try {
+        const ventas = await fetchAutenticado("ventas?select=*&order=fecha_hora.desc&limit=90");
+        if (!ventas.length) {
+          renderEstadoPanel(contenedor, "Todavía no hay ventas sincronizadas.");
+          return;
+        }
+        contenedor.innerHTML = ventas
+          .map(
+            (venta) => `
+            <div class="fila-item">
+              <div class="linea-1">
+                <span>${formatoMoneda(venta.total)}${venta.anulada ? ' <span class="badge rojo">Anulada</span>' : ""}</span>
+                <span>${textoTiempoRelativo(venta.fecha_hora)}</span>
+              </div>
+              <div class="linea-2">
+                <span>${venta.metodo_pago || "—"}${venta.segmento ? " · " + venta.segmento : ""}</span>
+                <span>${venta.usuario_nombre || "—"}</span>
+              </div>
+            </div>
+          `
+          )
+          .join("");
+      } catch (err) {
+        await manejarErrorPanel(err, contenedor, "No se pudo cargar las ventas.");
+      }
+    }
+
+    const cargadoresPorPestana = {
+      resumen: cargarResumen,
+      catalogo: cargarCatalogo,
+      compras: cargarCompras,
+      ventas: cargarVentas,
+    };
+    let pestanaActiva = "resumen";
+
+    function cambiarPestana(pestana) {
+      pestanaActiva = pestana;
+      document.querySelectorAll(".tab-btn").forEach((boton) => {
+        boton.classList.toggle("activo", boton.dataset.tab === pestana);
+      });
+      document.querySelectorAll(".panel").forEach((panel) => {
+        panel.classList.toggle("oculto", panel.id !== `panel-${pestana}`);
+      });
+      cargadoresPorPestana[pestana]();
+    }
+
+    document.querySelectorAll(".tab-btn").forEach((boton) => {
+      boton.addEventListener("click", () => cambiarPestana(boton.dataset.tab));
+    });
+
+    document.getElementById("buscador-catalogo").addEventListener("input", (evento) => {
+      renderCatalogo(evento.target.value);
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
+    }
+
     document.getElementById("form-login").addEventListener("submit", async (evento) => {
       evento.preventDefault();
       const email = document.getElementById("login-email").value.trim();
@@ -447,7 +696,7 @@
       btnLogin.textContent = "Entrando…";
       try {
         await iniciarSesion(email, password);
-        await cargarResumen();
+        cambiarPestana("resumen");
       } catch (err) {
         mostrarLogin(err.message || "No se pudo iniciar sesión.");
       } finally {
@@ -458,12 +707,13 @@
 
     document.getElementById("btn-logout").addEventListener("click", () => {
       borrarSesion();
+      cambiarPestana("resumen");
       mostrarLogin();
     });
 
-    document.getElementById("btn-refrescar").addEventListener("click", cargarResumen);
+    document.getElementById("btn-refrescar").addEventListener("click", () => cargadoresPorPestana[pestanaActiva]());
     cargarResumen();
-    setInterval(cargarResumen, 60000);
+    setInterval(() => cargadoresPorPestana[pestanaActiva](), 60000);
   </script>
 </body>
 </html>
